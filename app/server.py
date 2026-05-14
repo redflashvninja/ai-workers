@@ -2,6 +2,8 @@
 AI Workers — FastAPI web server
 Run with: uvicorn app.server:app --reload  OR  python main.py serve
 """
+from __future__ import annotations
+
 import asyncio
 import json
 import sys
@@ -19,11 +21,6 @@ import anthropic
 
 from config import ANTHROPIC_API_KEY
 from agents.orchestrator import OrchestratorAgent
-from agents.email_agent import EmailAgent
-from agents.calendar_agent import CalendarAgent
-from agents.polymarket_agent import PolymarketAgent
-from agents.outreach_agent import OutreachAgent
-from agents.research_agent import ResearchAgent
 import integrations.polymarket as pm
 
 app = FastAPI(title="AI Workers", version="2.0.0")

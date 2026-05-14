@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from typing import Any, Callable
 import anthropic
@@ -49,7 +51,6 @@ class BaseAgent:
                 system=system,
                 tools=self._tools,
                 messages=messages,
-                betas=["prompt-caching-2024-07-31"] if False else [],
             )
 
             if response.stop_reason == "end_turn":

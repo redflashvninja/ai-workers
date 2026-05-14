@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Workers</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span class="logo-icon">⚡</span>
+      <span class="logo-text">AI Workers</span>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-btn active" data-section="dashboard">
+        <span class="nav-icon">◈</span> Dashboard
+      </button>
+      <button class="nav-btn" data-section="chat">
+        <span class="nav-icon">◉</span> Chat
+      </button>
+      <button class="nav-btn" data-section="email">
+        <span class="nav-icon">✉</span> Email
+      </button>
+      <button class="nav-btn" data-section="calendar">
+        <span class="nav-icon">◷</span> Calendar
+      </button>
+      <button class="nav-btn" data-section="polymarket">
+        <span class="nav-icon">◈</span> Polymarket
+      </button>
+      <button class="nav-btn" data-section="outreach">
+        <span class="nav-icon">◎</span> Outreach
+      </button>
+    </nav>
+    <div class="sidebar-status" id="sidebar-status">
+      <div class="status-dot" id="status-dot"></div>
+      <span id="status-text">Connecting...</span>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="main">
+
+    <!-- Dashboard -->
+    <section class="section active" id="section-dashboard">
+      <div class="section-header">
+        <h1>Dashboard</h1>
+        <span class="section-sub" id="dash-time"></span>
+      </div>
+      <div class="cards-grid">
+        <div class="card card-stat" id="card-email">
+          <div class="card-icon">✉</div>
+          <div class="card-info">
+            <div class="card-value" id="stat-email">—</div>
+            <div class="card-label">Unread Emails</div>
+          </div>
+        </div>
+        <div class="card card-stat" id="card-cal">
+          <div class="card-icon">◷</div>
+          <div class="card-info">
+            <div class="card-value" id="stat-cal">—</div>
+            <div class="card-label">Events Today</div>
+          </div>
+        </div>
+        <div class="card card-stat">
+          <div class="card-icon">◈</div>
+          <div class="card-info">
+            <div class="card-value" id="stat-markets">—</div>
+            <div class="card-label">Trending Markets</div>
+          </div>
+        </div>
+        <div class="card card-stat">
+          <div class="card-icon">◎</div>
+          <div class="card-info">
+            <div class="card-value" id="stat-calls">—</div>
+            <div class="card-label">Calls Made</div>
+          </div>
+        </div>
+      </div>
+      <div class="dash-cols">
+        <div class="dash-col">
+          <div class="card">
+            <div class="card-title">Recent Emails</div>
+            <div id="dash-emails" class="list-placeholder">Loading…</div>
+          </div>
+        </div>
+        <div class="dash-col">
+          <div class="card">
+            <div class="card-title">Upcoming Events</div>
+            <div id="dash-events" class="list-placeholder">Loading…</div>
+          </div>
+        </div>
+        <div class="dash-col">
+          <div class="card">
+            <div class="card-title">Top Markets</div>
+            <div id="dash-markets" class="list-placeholder">Loading…</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Chat -->
+    <section class="section" id="section-chat">
+      <div class="section-header">
+        <h1>Chat with your team</h1>
+        <span class="section-sub">Orchestrator routes tasks to the right agent automatically</span>
+      </div>
+      <div class="chat-wrap">
+        <div class="chat-messages" id="chat-messages">
+          <div class="chat-msg assistant">
+            <div class="chat-bubble">
+              Hey! I'm your AI chief-of-staff. I have agents for email, calendar, Polymarket, outreach, and research. What do you need?
+            </div>
+          </div>
+        </div>
+        <div class="chat-examples">
+          <button class="example-btn" data-prompt="Show me my unread emails from today">📧 Unread emails</button>
+          <button class="example-btn" data-prompt="What's on my calendar this week?">📅 This week</button>
+          <button class="example-btn" data-prompt="Show me the top trending Polymarket markets">📈 Trending markets</button>
+          <button class="example-btn" data-prompt="Research Anthropic and summarise what they do">🔍 Research Anthropic</button>
+        </div>
+        <div class="chat-input-row">
+          <textarea id="chat-input" placeholder="Ask anything — email, calendar, markets, research, outreach…" rows="2"></textarea>
+          <button class="send-btn" id="chat-send">Send</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Email -->
+    <section class="section" id="section-email">
+      <div class="section-header">
+        <h1>Email</h1>
+        <button class="btn-primary" id="compose-btn">+ Compose</button>
+      </div>
+      <div class="email-toolbar">
+        <input type="text" id="email-search-input" placeholder="Search (Gmail query: from:, subject:, is:unread…)" />
+        <button class="btn-secondary" id="email-search-btn">Search</button>
+      </div>
+      <div id="email-list" class="email-list">Loading inbox…</div>
+
+      <!-- Compose modal -->
+      <div class="modal" id="compose-modal" style="display:none">
+        <div class="modal-box">
+          <div class="modal-header">
+            <span>New Email</span>
+            <button class="modal-close" id="compose-close">✕</button>
+          </div>
+          <input type="text" id="compose-to" placeholder="To" class="modal-input" />
+          <input type="text" id="compose-subject" placeholder="Subject" class="modal-input" />
+          <textarea id="compose-body" placeholder="Message…" class="modal-textarea" rows="8"></textarea>
+          <div class="modal-actions">
+            <button class="btn-secondary" id="compose-draft">Save Draft</button>
+            <button class="btn-primary" id="compose-send">Send</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thread viewer -->
+      <div class="modal" id="thread-modal" style="display:none">
+        <div class="modal-box modal-wide">
+          <div class="modal-header">
+            <span id="thread-subject">Thread</span>
+            <button class="modal-close" id="thread-close">✕</button>
+          </div>
+          <div id="thread-body" class="thread-body"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Calendar -->
+    <section class="section" id="section-calendar">
+      <div class="section-header">
+        <h1>Calendar</h1>
+        <button class="btn-primary" id="new-event-btn">+ New Event</button>
+      </div>
+      <div class="cal-toolbar">
+        <label>Show next
+          <select id="cal-days">
+            <option value="3">3 days</option>
+            <option value="7" selected>7 days</option>
+            <option value="14">14 days</option>
+            <option value="30">30 days</option>
+          </select>
+        </label>
+      </div>
+      <div id="event-list" class="event-list">Loading events…</div>
+
+      <!-- New event modal -->
+      <div class="modal" id="event-modal" style="display:none">
+        <div class="modal-box">
+          <div class="modal-header">
+            <span>New Event</span>
+            <button class="modal-close" id="event-close">✕</button>
+          </div>
+          <input type="text" id="ev-summary" placeholder="Event title" class="modal-input" />
+          <input type="datetime-local" id="ev-start" class="modal-input" />
+          <input type="datetime-local" id="ev-end" class="modal-input" />
+          <input type="text" id="ev-location" placeholder="Location (optional)" class="modal-input" />
+          <input type="text" id="ev-attendees" placeholder="Attendees (comma-separated emails)" class="modal-input" />
+          <textarea id="ev-desc" placeholder="Description (optional)" class="modal-textarea" rows="3"></textarea>
+          <div class="modal-actions">
+            <button class="btn-primary" id="event-create">Create Event</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Polymarket -->
+    <section class="section" id="section-polymarket">
+      <div class="section-header">
+        <h1>Polymarket</h1>
+        <span class="section-sub">Live prediction markets</span>
+      </div>
+      <div class="market-toolbar">
+        <input type="text" id="market-search-input" placeholder="Search markets: election, bitcoin, AI…" />
+        <button class="btn-secondary" id="market-search-btn">Search</button>
+        <button class="btn-ghost" id="market-trending-btn">🔥 Trending</button>
+      </div>
+      <div id="market-grid" class="market-grid">Loading markets…</div>
+    </section>
+
+    <!-- Outreach -->
+    <section class="section" id="section-outreach">
+      <div class="section-header">
+        <h1>Outreach</h1>
+        <span class="section-sub">Cold calls & SMS via Twilio</span>
+      </div>
+      <div class="outreach-panels">
+        <div class="card outreach-card">
+          <div class="card-title">📞 Make a Call</div>
+          <input type="tel" id="call-to" placeholder="Phone number (+12025551234)" class="modal-input" />
+          <textarea id="call-msg" placeholder="Message to speak (TTS)…" class="modal-textarea" rows="4"></textarea>
+          <button class="btn-primary" id="call-btn">Call Now</button>
+          <div id="call-result" class="result-box"></div>
+        </div>
+        <div class="card outreach-card">
+          <div class="card-title">💬 Send SMS</div>
+          <input type="tel" id="sms-to" placeholder="Phone number (+12025551234)" class="modal-input" />
+          <textarea id="sms-body" placeholder="SMS message…" class="modal-textarea" rows="4"></textarea>
+          <button class="btn-primary" id="sms-btn">Send SMS</button>
+          <div id="sms-result" class="result-box"></div>
+        </div>
+        <div class="card outreach-card outreach-wide">
+          <div class="card-title">📋 Recent Calls</div>
+          <div id="calls-list" class="calls-list">Loading…</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

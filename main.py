@@ -2,7 +2,7 @@
 """
 AI Workers — personal in-house agent platform.
 Run `python main.py` for an interactive session,
-or `python main.py --email "..."` / `--calendar "..."` to hit an agent directly.
+or `python main.py serve` to launch the web dashboard.
 """
 
 import sys
@@ -16,6 +16,9 @@ from config import ANTHROPIC_API_KEY, CLAUDE_MODEL
 from agents.orchestrator import OrchestratorAgent
 from agents.email_agent import EmailAgent
 from agents.calendar_agent import CalendarAgent
+from agents.polymarket_agent import PolymarketAgent
+from agents.outreach_agent import OutreachAgent
+from agents.research_agent import ResearchAgent
 from utils.formatting import print_response, print_user, print_error, print_info
 
 console = Console()
@@ -133,6 +136,37 @@ def agenda(days):
         "Format them clearly with date, time, title, and attendees."
     )
     _run_agent(agent, task)
+
+
+@cli.command()
+@click.option("--host", default="127.0.0.1", help="Host to bind to")
+@click.option("--port", default=8000, help="Port to listen on")
+@click.option("--open/--no-open", "open_browser", default=True, help="Open browser automatically")
+def serve(host, port, open_browser):
+    """Launch the web dashboard (FastAPI + browser UI)."""
+    import uvicorn, threading, webbrowser, time
+    url = f"http://{host}:{port}"
+    console.print(f"[bold cyan]AI Workers Dashboard[/bold cyan] → {url}")
+    if open_browser:
+        threading.Timer(1.2, lambda: webbrowser.open(url)).start()
+    uvicorn.run("app.server:app", host=host, port=port, reload=False)
+
+
+@cli.command()
+@click.argument("query")
+def markets(query):
+    """Search Polymarket prediction markets."""
+    client = _make_client()
+    _run_agent(PolymarketAgent(client), f"Search Polymarket for: {query}. Show prices, volumes, and URLs.")
+
+
+@cli.command()
+@click.argument("task_description", nargs=-1, required=True)
+def research(task_description):
+    """Run a web research task."""
+    task = " ".join(task_description)
+    client = _make_client()
+    _run_agent(ResearchAgent(client), task)
 
 
 @cli.command()

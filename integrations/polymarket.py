@@ -1,12 +1,19 @@
+from __future__ import annotations
+
 import httpx
-from typing import Optional
 
 CLOB_BASE = "https://clob.polymarket.com"
 GAMMA_BASE = "https://gamma-api.polymarket.com"
 
+_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Accept": "application/json",
+    "Referer": "https://polymarket.com/",
+}
+
 
 def _get(url: str, params: dict = None) -> dict | list:
-    with httpx.Client(timeout=15) as client:
+    with httpx.Client(timeout=15, headers=_HEADERS) as client:
         r = client.get(url, params=params or {})
         r.raise_for_status()
         return r.json()

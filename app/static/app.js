@@ -1,6 +1,9 @@
 /* ── AI Workers Frontend ─────────────────────────────────────────────── */
 
 const API = '';  // same origin
+// Polymarket APIs called directly from the browser (their server blocks datacenter IPs)
+const GAMMA = 'https://gamma-api.polymarket.com';
+const CLOB  = 'https://clob.polymarket.com';
 let ws = null;
 let wsReady = false;
 
@@ -239,11 +242,11 @@ document.getElementById('event-create').addEventListener('click', async () => {
 
 // ── Polymarket ────────────────────────────────────────────────────────
 async function loadTrending() {
-  await loadMarkets(`${API}/api/polymarket/trending?limit=12`);
+  await loadMarkets(`${GAMMA}/markets?active=true&closed=false&_sort=volume24hr&_order=DESC&limit=12`);
 }
 
 async function searchMarkets(q) {
-  await loadMarkets(`${API}/api/polymarket/search?q=${encodeURIComponent(q)}&limit=24`);
+  await loadMarkets(`${GAMMA}/markets?active=true&closed=false&_q=${encodeURIComponent(q)}&limit=24`);
 }
 
 async function loadMarkets(url) {
@@ -251,28 +254,40 @@ async function loadMarkets(url) {
   el.innerHTML = '<div class="list-placeholder">Loading…</div>';
   try {
     const r = await fetch(url);
-    const markets = await r.json();
-    if (!Array.isArray(markets) || markets.length === 0) {
+    const raw = await r.json();
+    // Gamma returns array directly; server proxy returns formatted objects
+    const markets = Array.isArray(raw) ? raw : (raw.markets || raw.data || []);
+    if (!markets.length) {
       el.innerHTML = '<div class="empty-state">No markets found.</div>'; return;
     }
     el.innerHTML = '';
     markets.forEach(m => {
+      // Gamma field names differ from our server-formatted objects
+      const question = m.question || m.title || '';
+      const prices = m.outcomePrices || [];
+      const rawYes = m.yes_price ?? (prices[0] != null ? prices[0] : null);
+      const rawNo  = m.no_price  ?? (prices[1] != null ? prices[1] : null);
+      const yp = rawYes != null ? (parseFloat(rawYes) * (parseFloat(rawYes) > 1 ? 1 : 100)).toFixed(0) + '%' : '—';
+      const np = rawNo  != null ? (parseFloat(rawNo)  * (parseFloat(rawNo)  > 1 ? 1 : 100)).toFixed(0) + '%' : '—';
+      const volRaw = m.volume24hr ?? m.volume_24hr ?? m.volume ?? 0;
+      const vol = volRaw ? '$' + Number(volRaw).toLocaleString('en-US', {maximumFractionDigits:0}) : '';
+      const endDate = m.endDate || m.end_date || m.endDateIso || '';
+      const slug = m.slug || m.market_slug || '';
+      const href = slug ? `https://polymarket.com/event/${slug}` : (m.url || '#');
+
       const card = document.createElement('a');
       card.className = 'market-card';
-      card.href = m.url || '#';
+      card.href = href;
       card.target = '_blank';
-      const yp = m.yes_price ? (parseFloat(m.yes_price) * (parseFloat(m.yes_price) > 1 ? 1 : 100)).toFixed(0) + '%' : '—';
-      const np = m.no_price  ? (parseFloat(m.no_price)  * (parseFloat(m.no_price)  > 1 ? 1 : 100)).toFixed(0) + '%' : '—';
-      const vol = m.volume_24hr ? '$' + Number(m.volume_24hr).toLocaleString('en-US', {maximumFractionDigits:0}) : (m.volume ? '$' + Number(m.volume).toLocaleString('en-US', {maximumFractionDigits:0}) : '');
       card.innerHTML = `
-        <div class="market-q">${esc(m.question)}</div>
+        <div class="market-q">${esc(question)}</div>
         <div class="market-prices">
           <span class="price-pill price-yes">YES ${yp}</span>
           <span class="price-pill price-no">NO ${np}</span>
         </div>
         <div class="market-meta">
           ${vol ? `<span class="market-vol">Vol: ${vol}</span>` : ''}
-          ${m.end_date ? `<span>Ends ${fmtDate(m.end_date)}</span>` : ''}
+          ${endDate ? `<span>Ends ${fmtDate(endDate)}</span>` : ''}
         </div>`;
       el.appendChild(card);
     });
@@ -384,17 +399,20 @@ async function loadDashboard() {
 
   // Markets
   try {
-    const r = await fetch(`${API}/api/polymarket/trending?limit=5`);
-    const markets = await r.json();
-    const count = Array.isArray(markets) ? markets.length : 0;
-    document.getElementById('stat-markets').textContent = count;
+    const r = await fetch(`${GAMMA}/markets?active=true&closed=false&_sort=volume24hr&_order=DESC&limit=5`);
+    const raw = await r.json();
+    const markets = Array.isArray(raw) ? raw : (raw.markets || raw.data || []);
+    document.getElementById('stat-markets').textContent = markets.length;
     const el = document.getElementById('dash-markets');
-    if (!Array.isArray(markets) || markets.length === 0) { el.innerHTML = '<div class="empty-state">No markets.</div>'; }
+    if (!markets.length) { el.innerHTML = '<div class="empty-state">No markets.</div>'; }
     else {
       el.innerHTML = markets.slice(0, 5).map(m => {
-        const yp = m.yes_price ? (parseFloat(m.yes_price) * (parseFloat(m.yes_price) > 1 ? 1 : 100)).toFixed(0) + '%' : '—';
+        const prices = m.outcomePrices || [];
+        const rawYes = m.yes_price ?? (prices[0] != null ? prices[0] : null);
+        const yp = rawYes != null ? (parseFloat(rawYes) * (parseFloat(rawYes) > 1 ? 1 : 100)).toFixed(0) + '%' : '—';
+        const question = m.question || m.title || '';
         return `<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;display:flex;justify-content:space-between;gap:8px">
-          <div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(m.question)}</div>
+          <div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(question)}</div>
           <div style="color:var(--green);font-weight:700;white-space:nowrap">${yp}</div>
         </div>`;
       }).join('');
